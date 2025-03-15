@@ -1,9 +1,7 @@
 import { create } from 'zustand';
 import { Location } from '@/types/location';
-import { 
-  getAllLocations, 
-  getLocationBySlug, 
-} from '@/services/location-service';
+import { locationsData } from '@/mock/data/locations';
+
 
 interface LocationState {
   locations: Location[];
@@ -19,7 +17,23 @@ interface LocationState {
   resetError: () => void;
 }
 
-export const useLocationStore = create<LocationState>((set) => ({
+const getLocationBySlug = (slug: string): Location | null => {
+  
+  if (!slug) {
+    console.warn('Service direct: slug vide ou undefined');
+    return null;
+  }
+    const location = locationsData.find(loc => loc.slug === slug);
+  
+  console.log('Service direct: location trouvée?', !!location);
+  if (location) {
+    console.log('Service direct: ville trouvée:', location.city);
+  }
+  
+  return location || null;
+};
+
+export const useLocationStore = create<LocationState>((set, get) => ({
   locations: [],
   featuredLocations: [],
   selectedLocation: null,
@@ -28,36 +42,63 @@ export const useLocationStore = create<LocationState>((set) => ({
 
   fetchLocations: async () => {
     set({ isLoading: true, error: null });
+    
     try {
-      const response = await getAllLocations();
-      set({ 
-        locations: response.data, 
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const featuredLocations = locationsData.filter(loc => loc.metadata?.featured);
+      
+      set({
+        locations: locationsData,
+        featuredLocations,
         isLoading: false,
-        error: response.error || null 
+        error: null
       });
+      
     } catch (error) {
-      set({ 
-        error: (error as Error).message || 'Failed to fetch locations', 
-        isLoading: false 
+      console.error('Store: erreur dans fetchLocations', error);
+      set({
+        error: (error as Error).message || 'Erreur lors du chargement des destinations',
+        isLoading: false
       });
     }
   },
-
-
-
+  
   fetchLocationBySlug: async (slug: string) => {
-    console.log('hiiiii')
-    set({ isLoading: true, error: null });
-    try {
-      const location = await getLocationBySlug(slug);
-      if (!location) {
-        throw new Error(`Location with slug "${slug}" not found`);
-      }
-      set({ selectedLocation: location, isLoading: false });
-    } catch (error) {
+    
+    if (!slug) {
+      console.warn('Store: fetchLocationBySlug appelé avec un slug vide');
       set({ 
-        error: (error as Error).message || `Failed to fetch location with slug "${slug}"`, 
-        isLoading: false 
+        error: 'Slug de destination invalide', 
+        isLoading: false,
+        selectedLocation: null
+      });
+      return;
+    }
+    
+    set({ isLoading: true, error: null });
+    
+    try {
+      const location = getLocationBySlug(slug);      
+      if (location) {
+        set({ 
+          selectedLocation: location, 
+          isLoading: false,
+          error: null 
+        });
+      } else {
+        set({ 
+          error: `Destination "${slug}" introuvable`, 
+          isLoading: false,
+          selectedLocation: null
+        });
+      }
+    } catch (error) {
+      console.error('Store: exception dans fetchLocationBySlug', error);
+      set({
+        error: (error as Error).message || `Erreur lors du chargement de la destination "${slug}"`,
+        isLoading: false,
+        selectedLocation: null
       });
     }
   },

@@ -3,11 +3,11 @@
 import React, { useMemo } from 'react';
 import { Location } from '@/types/location';
 import LocationCard from '@/components/cards/location-card';
-import DesktopLocationGrid from './desktop-grid';
 import { LocationGridProps, FEATURED_CITIES, DEFAULT_GRID_CONFIG } from './types';
 import LocationGridSkeleton from '@/components/ui/skeletons/location-grid-skeleton';
+import DesktopLocationGrid from './desktop-locations-grid';
 
-const LocationGrid: React.FC<LocationGridProps> = ({
+const LocationGrids: React.FC<LocationGridProps> = ({
   locations,
   showDescription = false,
   showButton = true,
@@ -65,4 +65,4 @@ const LocationGrid: React.FC<LocationGridProps> = ({
   );
 };
 
-export default LocationGrid;
+export default LocationGrids;

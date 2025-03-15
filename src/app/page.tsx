@@ -1,25 +1,17 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import Banner from '@/components/home/Banner';
-import LocationGridSkeleton from '@/components/ui/skeletons/location-grid-skeleton';
-import ErrorMessage from '@/components/ui/error-message';
-import LocationGrid from '@/components/home/location-grid';
 import { useLocationStore } from '@/store/location-store';
+import LocationContent from '@/components/locations/locations-content';
+import Banner from '@/components/sections/Banner';
 
 export default function HomePage() {
   const { locations, isLoading, error, fetchLocations, fetchLocationBySlug } = useLocationStore();
+
   useEffect(() => {
-    fetchLocations();
-    fetchLocationBySlug('paris')
-  }, []);
-  const renderContent = () => {
-    if (isLoading) return <LocationGridSkeleton />;
-
-    if (error) return <ErrorMessage message="Error loading locations. Please try again later." />;
-
-    return <LocationGrid locations={locations} showDescription={false} showButton={true} />;
-  };
+    fetchLocations()
+    return () => {};
+  }, [fetchLocations]);
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -32,7 +24,7 @@ export default function HomePage() {
               Lorem ipsum dolor sit amet
             </h2>
 
-            {renderContent()}
+            <LocationContent isLoading={isLoading} error={error} locations={locations} />
           </div>
         </section>
       </div>

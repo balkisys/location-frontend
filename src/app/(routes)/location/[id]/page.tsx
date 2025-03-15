@@ -1,29 +1,60 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { notFound, useParams } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { useLocationStore } from '@/store/location-store';
 import BackButton from '@/components/common/back-button';
 import { formatDate } from '@/lib/utils';
 import LocationSkeleton from '@/components/ui/skeletons/location-skeleton';
 import ImageCarousel from '@/components/sections/ImageCarousel';
-import { useLocationStore } from '@/store/location-store';
+import LocationNotFound from '../not-found';
 
 export default function LocationDetailPage() {
   const params = useParams();
-  const slug = Array.isArray(params.id) ? params.id[0] : (params.id as string);
+  const [slugState, setSlugState] = useState<string | null>(null);
+  
+  const { 
+    selectedLocation, 
+    isLoading, 
+    error, 
+    fetchLocationBySlug 
+  } = useLocationStore();
 
-  const { selectedLocation, isLoading, error, fetchLocationBySlug } = useLocationStore();
   useEffect(() => {
-    fetchLocationBySlug(slug);
-  }, [slug, fetchLocationBySlug]);
+    let extractedSlug: string | null = null;
+    
+    if (params) {
+      if (typeof params.id === 'string') {
+        extractedSlug = params.id;
+      } else if (Array.isArray(params.id) && params.id.length > 0) {
+        extractedSlug = params.id[0];
+      }
+    }
+    
+    if (extractedSlug) {
+      setSlugState(extractedSlug);
+    }
+  }, [params]);
+
+  useEffect(() => {
+    console.log('État du slug:', slugState);
+    
+    if (slugState && !selectedLocation) {
+      fetchLocationBySlug(slugState);
+    } 
+  }, [slugState, fetchLocationBySlug, selectedLocation?.id]);
 
   if (isLoading) {
     return <LocationSkeleton />;
   }
 
-  if (error || !selectedLocation) {
-    console.error('Error loading location:', error);
-    return notFound();
+  if (error) {
+    console.error('Erreur de chargement:', error);
+    return <LocationNotFound />;
+  }
+
+  if (!selectedLocation) {
+    return <LocationSkeleton />;
   }
 
   const { city, country, description, metadata, imagePath } = selectedLocation;
